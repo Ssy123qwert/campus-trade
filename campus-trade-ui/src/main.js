@@ -13,6 +13,7 @@ import MyProducts from './views/MyProducts.vue'
 import AiChat from './views/AiChat.vue'
 import Chat from './views/Chat.vue'
 import Messages from './views/Messages.vue'
+import Admin from './views/Admin.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -25,7 +26,8 @@ const routes = [
   { path: '/my-products', component: MyProducts },
   { path: '/ai-chat', component: AiChat },
   { path: '/chat', component: Chat },
-  { path: '/messages', component: Messages }
+  { path: '/messages', component: Messages },
+  { path: '/admin', component: Admin }
 ]
 
 const router = createRouter({

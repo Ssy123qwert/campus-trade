@@ -17,6 +17,7 @@ public class Product {
     private BigDecimal originalPrice;
     private String category;
     private String images;
+    private String videoUrl;
     @TableField("`condition`")
     private Integer condition;  // 1全新 2几乎全新 3轻微使用 4明显使用
     @TableField("`status`")

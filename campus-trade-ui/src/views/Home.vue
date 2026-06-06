@@ -4,6 +4,12 @@
       <h1>校园二手交易</h1>
     </header>
 
+    <!-- 公告栏 -->
+    <div class="announcement" v-if="announcement">
+      <span class="ann-icon">📢</span>
+      <span class="ann-text">{{ announcement.content }}</span>
+    </div>
+
     <!-- 搜索栏 -->
     <div class="search-bar">
       <input v-model="keyword" placeholder="搜索商品..." @keyup.enter="search" />
@@ -69,27 +75,33 @@ export default {
     const loading = ref(false)
     const page = ref(1)
     const hasMore = ref(true)
+    const announcement = ref(null)
 
     const loadProducts = async (isAppend = false) => {
       loading.value = true
-      if (!isAppend) page.value = 1
-      const res = await api.getProducts({
-        keyword: keyword.value,
-        category: activeCategory.value || null,
-        sort: sort.value,
-        page: page.value,
-        size: 10
-      })
-      if (res.code === 200) {
-        const list = res.data.records || []
-        if (isAppend) {
-          products.value.push(...list)
-        } else {
-          products.value = list
+      try {
+        if (!isAppend) page.value = 1
+        const res = await api.getProducts({
+          keyword: keyword.value,
+          category: activeCategory.value || null,
+          sort: sort.value,
+          page: page.value,
+          size: 10
+        })
+        if (res.code === 200) {
+          const list = res.data.records || []
+          if (isAppend) {
+            products.value.push(...list)
+          } else {
+            products.value = list
+          }
+          hasMore.value = list.length >= 10
         }
-        hasMore.value = list.length >= 10
+      } catch (e) {
+        console.error('加载商品失败', e)
+      } finally {
+        loading.value = false
       }
-      loading.value = false
     }
 
     const loadCategories = async () => {

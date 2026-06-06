@@ -6,10 +6,11 @@
       <span style="width:40px"></span>
     </header>
 
-    <div class="images">
+    <div class="images" v-if="product.videoUrl || imageList.length > 0">
+      <video v-if="product.videoUrl" :src="product.videoUrl" controls class="product-video"></video>
       <img v-for="(img, i) in imageList" :key="i" :src="img" alt="" />
-      <div class="no-img" v-if="imageList.length === 0">暂无图片</div>
     </div>
+    <div class="no-img" v-else>暂无图片</div>
 
     <div class="info">
       <h2>{{ product.title }}</h2>
@@ -29,7 +30,7 @@
       </div>
     </div>
 
-    <div class="actions" v-if="user && user.id !== product.userId">
+    <div class="actions" v-if="user && user.id != product.userId">
       <button class="fav-btn" :class="{ favorited: isFav }" @click="toggleFav">
         {{ isFav ? '已收藏' : '收藏' }}
       </button>
@@ -136,7 +137,8 @@ export default {
 
 .images { display: flex; overflow-x: auto; gap: 10px; padding: 10px 15px; background: #fff; }
 .images img { width: 200px; height: 200px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-.no-img { width: 100%; height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; }
+.product-video { width: 200px; height: 200px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+.no-img { width: calc(100% - 30px); margin: 10px 15px; height: 200px; background: #eee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; }
 
 .info { padding: 15px; background: #fff; margin-top: 8px; }
 .info h2 { font-size: 18px; margin-bottom: 10px; }

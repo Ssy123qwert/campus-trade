@@ -16,6 +16,7 @@
           <span class="badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
         </div>
         <div class="menu-item" @click="$router.push('/ai-chat')">AI 智能助手</div>
+        <div class="menu-item admin-item" v-if="isAdmin" @click="$router.push('/admin')">⚙️ 管理后台</div>
         <div class="menu-item logout" @click="logout">退出登录</div>
       </div>
     </div>
@@ -37,6 +38,7 @@ export default {
     const router = useRouter()
     const user = ref(null)
     const unreadCount = ref(0)
+    const isAdmin = ref(false)
 
     const loadUnread = async () => {
       if (!user.value) return
@@ -44,9 +46,15 @@ export default {
       if (res.code === 200) unreadCount.value = res.data
     }
 
+    const checkAdmin = async () => {
+      const res = await api.checkAdmin()
+      if (res.code === 200) isAdmin.value = res.data
+    }
+
     onMounted(() => {
       user.value = JSON.parse(localStorage.getItem('user') || 'null')
       loadUnread()
+      checkAdmin()
     })
 
     const logout = () => {
@@ -56,7 +64,7 @@ export default {
       router.push('/')
     }
 
-    return { user, unreadCount, logout }
+    return { user, unreadCount, isAdmin, logout }
   }
 }
 </script>
@@ -71,6 +79,7 @@ export default {
 .badge { background: #f44; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; }
 .menu-item:active { background: #f5f5f5; }
 .badge { display: inline-block; background: #f44; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+.admin-item { color: #07c160; font-weight: bold; }
 .logout { color: #f44; text-align: center; }
 .login-tip { text-align: center; padding: 80px 20px; }
 .login-tip button { margin-top: 15px; padding: 10px 30px; background: #07c160; color: #fff; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }

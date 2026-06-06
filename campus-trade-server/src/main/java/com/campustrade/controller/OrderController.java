@@ -2,6 +2,7 @@ package com.campustrade.controller;
 
 import com.campustrade.dto.R;
 import com.campustrade.entity.Order;
+import com.campustrade.exception.BusinessException;
 import com.campustrade.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +19,12 @@ public class OrderController {
     @PostMapping("/create")
     public R<Order> create(@RequestParam Long productId, @RequestParam Long buyerId) {
         Order order = orderService.create(productId, buyerId);
-        if (order == null) {
-            return R.fail("商品不存在或已售出");
-        }
         return R.ok(order);
     }
 
     @GetMapping("/my")
-    public R<List<Order>> myOrders(@RequestParam Long userId, @RequestParam(defaultValue = "buyer") String type) {
+    public R<List<Order>> myOrders(@RequestParam Long userId,
+                                    @RequestParam(defaultValue = "buyer") String type) {
         List<Order> list;
         if ("seller".equals(type)) {
             list = orderService.lambdaQuery()
@@ -42,21 +41,24 @@ public class OrderController {
     }
 
     @PutMapping("/status")
-    public R<?> updateStatus(@RequestParam Long id, @RequestParam Integer status) {
+    public R<?> updateStatus(@RequestParam Long id, @RequestParam Integer status,
+                              @RequestParam Long userId) {
         Order order = orderService.getById(id);
-        if (order != null) {
-            order.setStatus(status);
-            orderService.updateById(order);
+        if (order == null) {
+            throw BusinessException.notFound("订单不存在");
         }
+        // 权限校验：只有卖家能发货，只有买家能确认收货
+        if (!order.getSellerId().equals(userId) && !order.getBuyerId().equals(userId)) {
+            throw BusinessException.forbidden("无权操作此订单");
+        }
+        order.setStatus(status);
+        orderService.updateById(order);
         return R.ok();
     }
 
     @PostMapping("/pay")
     public R<Order> pay(@RequestParam Long orderId, @RequestParam Long userId) {
         Order order = orderService.pay(orderId, userId);
-        if (order == null) {
-            return R.fail("支付失败，订单不存在或已支付");
-        }
         return R.ok(order);
     }
 

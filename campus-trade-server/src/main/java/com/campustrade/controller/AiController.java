@@ -1,6 +1,11 @@
 package com.campustrade.controller;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.campustrade.dto.R;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -8,14 +13,30 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
+/**
+ * AI 智能助手控制器
+ * 将 DeepSeek API Key 移至配置文件，使用 fastjson2 替代字符串拼接。
+ */
+@Slf4j
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
 
-    private static final String API_KEY = "sk-27739e888630412bb44d30bd6f3a1094";
-    private static final String API_URL = "https://api.deepseek.com/v1/chat/completions";
+    @Value("${campustrade.ai.api-key:}")
+    private String apiKey;
+
+    @Value("${campustrade.ai.api-url:https://api.deepseek.com/v1/chat/completions}")
+    private String apiUrl;
+
+    private static final String SYSTEM_PROMPT = "你是校园二手交易平台的AI助手。你的职责是：\n" +
+            "1. 为用户提供二手商品选购建议\n" +
+            "2. 帮助用户评估商品合理价格\n" +
+            "3. 提供二手交易注意事项和安全建议\n" +
+            "4. 回答关于校园二手交易的各种问题\n" +
+            "请用友好、专业的语气回答，每次回答控制在200字以内。";
 
     private final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
@@ -25,51 +46,58 @@ public class AiController {
     public R<String> chat(@RequestBody Map<String, String> body) {
         String question = body.get("question");
         if (question == null || question.isBlank()) {
-            return R.fail("\u95ee\u9898\u4e0d\u80fd\u4e3a\u7a7a");
+            return R.fail("问题不能为空");
+        }
+
+        // 检查 API Key 是否配置
+        if (apiKey == null || apiKey.isBlank()) {
+            return R.fail("AI服务暂未配置，请联系管理员");
         }
 
         try {
-            String systemPrompt = "\u4f60\u662f\u6821\u56ed\u4e8c\u624b\u4ea4\u6613\u5e73\u53f0\u7684AI\u52a9\u624b\u3002\u4f60\u7684\u804c\u8d23\u662f\uff1a\\n" +
-                    "1. \u4e3a\u7528\u6237\u63d0\u4f9b\u4e8c\u624b\u5546\u54c1\u9009\u8d2d\u5efa\u8bae\\n" +
-                    "2. \u5e2e\u52a9\u7528\u6237\u8bc4\u4f30\u5546\u54c1\u5408\u7406\u4ef7\u683c\\n" +
-                    "3. \u63d0\u4f9b\u4e8c\u624b\u4ea4\u6613\u6ce8\u610f\u4e8b\u9879\u548c\u5b89\u5168\u5efa\u8bae\\n" +
-                    "4. \u56de\u7b54\u5173\u4e8e\u6821\u56ed\u4e8c\u624b\u4ea4\u6613\u7684\u5404\u79cd\u95ee\u9898\\n" +
-                    "\u8bf7\u7528\u53cb\u597d\u3001\u4e13\u4e1a\u7684\u8bed\u6c14\u56de\u7b54\uff0c\u6bcf\u6b21\u56de\u7b54\u63a7\u5236\u5728200\u5b57\u4ee5\u5185\u3002";
-
-            String requestBody = String.format(
-                    "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"%s\"},{\"role\":\"user\",\"content\":\"%s\"}],\"max_tokens\":500,\"temperature\":0.7}",
-                    systemPrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"),
-                    question.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n"));
+            // 使用 fastjson2 构建请求体
+            JSONObject requestBody = JSONObject.of(
+                "model", "deepseek-chat",
+                "messages", JSONArray.of(
+                    JSONObject.of("role", "system", "content", SYSTEM_PROMPT),
+                    JSONObject.of("role", "user", "content", question)
+                ),
+                "max_tokens", 500,
+                "temperature", 0.7
+            );
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL))
+                    .uri(URI.create(apiUrl))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + API_KEY)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .header("Authorization", "Bearer " + apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toJSONString()))
                     .timeout(Duration.ofSeconds(30))
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                String bodyStr = response.body();
-                int contentStart = bodyStr.indexOf("\"content\":\"");
-                if (contentStart > 0) {
-                    contentStart += 11;
-                    int contentEnd = bodyStr.indexOf("\"", contentStart);
-                    if (contentEnd > contentStart) {
-                        String content = bodyStr.substring(contentStart, contentEnd)
-                                .replace("\\n", "\n")
-                                .replace("\\\"", "\"");
-                        return R.ok(content);
+                // 使用 fastjson2 解析响应
+                JSONObject respJson = JSON.parseObject(response.body());
+                JSONArray choices = respJson.getJSONArray("choices");
+                if (choices != null && !choices.isEmpty()) {
+                    JSONObject firstChoice = choices.getJSONObject(0);
+                    JSONObject messageObj = firstChoice.getJSONObject("message");
+                    if (messageObj != null) {
+                        String content = messageObj.getString("content");
+                        if (content != null && !content.isBlank()) {
+                            return R.ok(content.trim());
+                        }
                     }
                 }
-                return R.ok("AI\u5df2\u6536\u5230\u4f60\u7684\u95ee\u9898\uff0c\u4f46\u6682\u65f6\u65e0\u6cd5\u89e3\u6790\u56de\u590d\u3002");
+                return R.ok("AI已收到你的问题，但暂时无法解析回复。");
             } else {
-                return R.fail("AI\u670d\u52a1\u8fd4\u56de\u9519\u8bef\uff1a" + response.statusCode());
+                log.warn("AI API 返回错误状态码: {}", response.statusCode());
+                return R.fail("AI服务暂时不可用，请稍后重试");
             }
         } catch (Exception e) {
-            return R.fail("AI\u670d\u52a1\u8c03\u7528\u5931\u8d25\uff1a" + e.getMessage());
+            log.error("AI服务调用失败", e);
+            return R.fail("AI服务调用失败，请稍后重试");
         }
     }
 }

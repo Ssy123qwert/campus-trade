@@ -5,3 +5,6 @@ dist/
 .idea/
 .vscode/
 *.iml
+
+# 包含敏感信息的配置文件（API Key等）
+application.properties

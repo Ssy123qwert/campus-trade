@@ -3,23 +3,23 @@
     <router-view />
     <nav class="tab-bar" v-if="showTabBar">
       <router-link to="/" class="tab-item" :class="{ active: $route.path === '/' }">
-        <span class="tab-icon">&#xe600;</span>
+        <span class="tab-icon">🏠</span>
         <span class="tab-text">首页</span>
       </router-link>
       <router-link to="/publish" class="tab-item" :class="{ active: $route.path === '/publish' }">
-        <span class="tab-icon">&#xe601;</span>
+        <span class="tab-icon">✏️</span>
         <span class="tab-text">发布</span>
       </router-link>
       <router-link to="/ai-chat" class="tab-item" :class="{ active: $route.path === '/ai-chat' }">
-        <span class="tab-icon">&#xe602;</span>
+        <span class="tab-icon">🤖</span>
         <span class="tab-text">AI助手</span>
       </router-link>
       <router-link to="/orders" class="tab-item" :class="{ active: $route.path === '/orders' }">
-        <span class="tab-icon">&#xe603;</span>
+        <span class="tab-icon">📋</span>
         <span class="tab-text">订单</span>
       </router-link>
       <router-link to="/profile" class="tab-item" :class="{ active: $route.path === '/profile' }">
-        <span class="tab-icon">&#xe604;</span>
+        <span class="tab-icon">👤</span>
         <span class="tab-text">我的</span>
       </router-link>
     </nav>

@@ -4,8 +4,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * 用户注册请求 DTO — 避免直接接收 Entity 导致的过度暴露风险
+ */
 @Data
-public class LoginDTO {
+public class RegisterDTO {
     @NotBlank(message = "用户名不能为空")
     @Size(min = 2, max = 30, message = "用户名长度需在2-30个字符之间")
     private String username;

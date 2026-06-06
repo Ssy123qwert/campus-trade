@@ -3,7 +3,12 @@ package com.campustrade.controller;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import com.campustrade.dto.R;
+import com.campustrade.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,11 +55,38 @@ public class FileController {
     }
 
     @GetMapping("/image/{filename}")
-    public byte[] image(@PathVariable String filename) throws IOException {
-        File file = new File(uploadPath + File.separator + "images", filename);
-        if (!file.exists()) {
-            throw new RuntimeException("文件不存在");
+    public ResponseEntity<Resource> image(@PathVariable String filename) {
+        // 路径穿越防护：文件名不能包含路径穿越字符
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            throw BusinessException.badRequest("非法文件名");
         }
-        return FileUtil.readBytes(file);
+        // 仅允许白名单中的图片扩展名
+        String ext = FileUtil.extName(filename).toLowerCase();
+        if (!ALLOWED_TYPES.contains(ext)) {
+            throw BusinessException.badRequest("不支持的文件类型");
+        }
+        File file = new File(uploadPath + File.separator + "images", filename);
+        // 二次确认：规范化路径必须在 uploadPath/images 目录之下，防止符号链接等绕过
+        try {
+            String canonicalPath = file.getCanonicalPath();
+            String basePath = new File(uploadPath, "images").getCanonicalPath();
+            if (!canonicalPath.startsWith(basePath + File.separator) && !canonicalPath.equals(basePath)) {
+                throw BusinessException.badRequest("非法文件路径");
+            }
+        } catch (IOException e) {
+            throw BusinessException.badRequest("文件路径解析失败");
+        }
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+        MediaType contentType = switch (ext) {
+            case "png" -> MediaType.IMAGE_PNG;
+            case "gif" -> MediaType.IMAGE_GIF;
+            case "webp" -> MediaType.parseMediaType("image/webp");
+            default -> MediaType.IMAGE_JPEG;
+        };
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .body(new FileSystemResource(file));
     }
 }
