@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE || "/api"
+﻿const BASE = import.meta.env.VITE_API_BASE || "/api"
 
 export const request = async (url, options = {}) => {
   const token = localStorage.getItem("token")
@@ -23,11 +23,12 @@ export const api = {
   getMyProducts: (userId) => request("/product/my?userId=" + userId),
   updateProduct: (data) => request("/product/update", { method: "PUT", body: JSON.stringify(data) }),
   offlineProduct: (id) => request("/product/offline?id=" + id, { method: "PUT" }),
+  relistProduct: (id) => request("/product/relist?id=" + id, { method: "PUT" }),
   getCategories: () => request("/product/categories"),
   createOrder: (productId, buyerId) => request("/order/create?productId=" + productId + "&buyerId=" + buyerId, { method: "POST" }),
   payOrder: (orderId, userId) => request("/order/pay?orderId=" + orderId + "&userId=" + userId, { method: "POST" }),
   getMyOrders: (userId, type = "buyer") => request("/order/my?userId=" + userId + "&type=" + type),
-  updateOrderStatus: (id, status) => request("/order/status?id=" + id + "&status=" + status, { method: "PUT" }),
+  updateOrderStatus: (id, status, userId) => request("/order/status?id=" + id + "&status=" + status + "&userId=" + userId, { method: "PUT" }),
   checkPendingOrder: (productId, buyerId) => request("/order/check?productId=" + productId + "&buyerId=" + buyerId),
   sendMessage: (fromUserId, toUserId, productId, content) => request("/message/send?fromUserId=" + fromUserId + "&toUserId=" + toUserId + "&productId=" + productId + "&content=" + encodeURIComponent(content), { method: "POST" }),
   getConversation: (userId, otherUserId, productId) => request("/message/conversation?userId=" + userId + "&otherUserId=" + otherUserId + "&productId=" + productId),
@@ -49,4 +50,7 @@ export const api = {
   toggleFavorite: (userId, productId) => request("/favorite/toggle?userId=" + userId + "&productId=" + productId, { method: "POST" }),
   getMyFavorites: (userId) => request("/favorite/my?userId=" + userId),
   checkFavorite: (userId, productId) => request("/favorite/check?userId=" + userId + "&productId=" + productId),
+  createReview: (data) => request("/review/create", { method: "POST", body: JSON.stringify(data) }),
+  getUserReviews: (userId, page = 1) => request("/review/user/" + userId + "?page=" + page + "&size=10"),
+  getReviewRate: (userId) => request("/review/rate/" + userId),
 }

@@ -43,6 +43,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUsername(username);
         user.setPassword(DigestUtil.md5Hex(password));
         user.setNickname(username);
+        user.setRole(0); // 新注册用户默认为普通用户
         boolean saved = this.save(user);
         if (!saved) {
             throw BusinessException.serverError("注册失败，请稍后重试");

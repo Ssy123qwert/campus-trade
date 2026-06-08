@@ -48,7 +48,7 @@ export default {
     }
 
     const relist = async (id) => {
-      await api.updateProduct({ id, status: 1 })
+      await api.relistProduct(id)
       loadProducts()
     }
 

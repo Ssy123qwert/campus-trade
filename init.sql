@@ -22,6 +22,32 @@
 USE `campus_trade`;
 
 --
+-- Table structure for table `t_announcement`
+--
+
+DROP TABLE IF EXISTS `t_announcement`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `t_announcement` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `content` text NOT NULL,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `t_announcement`
+--
+
+LOCK TABLES `t_announcement` WRITE;
+/*!40000 ALTER TABLE `t_announcement` DISABLE KEYS */;
+INSERT INTO `t_announcement` (`id`, `content`, `create_time`, `update_time`) VALUES (1,'欢迎使用校园二手交易平台！请文明交易，注意保护个人信息安全。',NOW(),NOW());
+/*!40000 ALTER TABLE `t_announcement` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `t_favorite`
 --
 

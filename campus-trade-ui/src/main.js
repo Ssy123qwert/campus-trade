@@ -14,6 +14,8 @@ import AiChat from './views/AiChat.vue'
 import Chat from './views/Chat.vue'
 import Messages from './views/Messages.vue'
 import Admin from './views/Admin.vue'
+import UserReviews from './views/UserReviews.vue'
+import CreateReview from './views/CreateReview.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -27,7 +29,9 @@ const routes = [
   { path: '/ai-chat', component: AiChat },
   { path: '/chat', component: Chat },
   { path: '/messages', component: Messages },
-  { path: '/admin', component: Admin }
+  { path: '/admin', component: Admin },
+  { path: '/reviews/:userId', component: UserReviews },
+  { path: '/review/:orderId', component: CreateReview }
 ]
 
 const router = createRouter({

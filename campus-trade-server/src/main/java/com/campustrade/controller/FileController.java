@@ -23,7 +23,15 @@ public class FileController {
     @Value("${campustrade.upload.path:${user.dir}/uploads}")
     private String uploadPath;
 
-    private static final Set<String> ALLOWED_TYPES = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("jpg", "jpeg", "png", "gif", "webp");
+    private static final Set<String> ALLOWED_VIDEO_TYPES = Set.of("mp4", "mov", "avi", "mkv", "webm");
+    private static final Set<String> ALLOWED_TYPES;
+
+    static {
+        ALLOWED_TYPES = new HashSet<>();
+        ALLOWED_TYPES.addAll(ALLOWED_IMAGE_TYPES);
+        ALLOWED_TYPES.addAll(ALLOWED_VIDEO_TYPES);
+    }
 
     @PostMapping("/upload")
     public R<List<String>> upload(@RequestParam("files") List<MultipartFile> files) {
@@ -37,16 +45,20 @@ public class FileController {
             if (!ALLOWED_TYPES.contains(ext)) {
                 return R.fail("不支持的文件类型: " + ext);
             }
-            if (file.getSize() > 5 * 1024 * 1024) {
-                return R.fail("单张图片不能超过5MB");
+            boolean isVideo = ALLOWED_VIDEO_TYPES.contains(ext);
+            long maxSize = isVideo ? 50L * 1024 * 1024 : 5L * 1024 * 1024;
+            if (file.getSize() > maxSize) {
+                return R.fail(isVideo ? "单个视频不能超过50MB" : "单张图片不能超过5MB");
             }
             try {
-                String dir = uploadPath + File.separator + "images";
+                String subDir = isVideo ? "videos" : "images";
+                String dir = uploadPath + File.separator + subDir;
                 FileUtil.mkdir(dir);
                 String filename = IdUtil.fastSimpleUUID() + "." + ext;
                 File dest = new File(dir, filename);
                 file.transferTo(dest);
-                urls.add("/api/file/image/" + filename);
+                String urlPrefix = isVideo ? "/api/file/videos/" : "/api/file/image/";
+                urls.add(urlPrefix + filename);
             } catch (IOException e) {
                 return R.fail("上传失败: " + e.getMessage());
             }
@@ -56,20 +68,26 @@ public class FileController {
 
     @GetMapping("/image/{filename}")
     public ResponseEntity<Resource> image(@PathVariable String filename) {
-        // 路径穿越防护：文件名不能包含路径穿越字符
+        return serveFile(filename, "images", ALLOWED_IMAGE_TYPES, true);
+    }
+
+    @GetMapping("/videos/{filename}")
+    public ResponseEntity<Resource> video(@PathVariable String filename) {
+        return serveFile(filename, "videos", ALLOWED_VIDEO_TYPES, false);
+    }
+
+    private ResponseEntity<Resource> serveFile(String filename, String subDir, Set<String> allowedExts, boolean isImage) {
         if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
             throw BusinessException.badRequest("非法文件名");
         }
-        // 仅允许白名单中的图片扩展名
         String ext = FileUtil.extName(filename).toLowerCase();
-        if (!ALLOWED_TYPES.contains(ext)) {
+        if (!allowedExts.contains(ext)) {
             throw BusinessException.badRequest("不支持的文件类型");
         }
-        File file = new File(uploadPath + File.separator + "images", filename);
-        // 二次确认：规范化路径必须在 uploadPath/images 目录之下，防止符号链接等绕过
+        File file = new File(uploadPath + File.separator + subDir, filename);
         try {
             String canonicalPath = file.getCanonicalPath();
-            String basePath = new File(uploadPath, "images").getCanonicalPath();
+            String basePath = new File(uploadPath, subDir).getCanonicalPath();
             if (!canonicalPath.startsWith(basePath + File.separator) && !canonicalPath.equals(basePath)) {
                 throw BusinessException.badRequest("非法文件路径");
             }
@@ -79,12 +97,24 @@ public class FileController {
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
         }
-        MediaType contentType = switch (ext) {
-            case "png" -> MediaType.IMAGE_PNG;
-            case "gif" -> MediaType.IMAGE_GIF;
-            case "webp" -> MediaType.parseMediaType("image/webp");
-            default -> MediaType.IMAGE_JPEG;
-        };
+        MediaType contentType;
+        if (isImage) {
+            contentType = switch (ext) {
+                case "png" -> MediaType.IMAGE_PNG;
+                case "gif" -> MediaType.IMAGE_GIF;
+                case "webp" -> MediaType.parseMediaType("image/webp");
+                default -> MediaType.IMAGE_JPEG;
+            };
+        } else {
+            contentType = switch (ext) {
+                case "mp4" -> MediaType.parseMediaType("video/mp4");
+                case "webm" -> MediaType.parseMediaType("video/webm");
+                case "mov" -> MediaType.parseMediaType("video/quicktime");
+                case "avi" -> MediaType.parseMediaType("video/x-msvideo");
+                case "mkv" -> MediaType.parseMediaType("video/x-matroska");
+                default -> MediaType.APPLICATION_OCTET_STREAM;
+            };
+        }
         return ResponseEntity.ok()
                 .contentType(contentType)
                 .body(new FileSystemResource(file));

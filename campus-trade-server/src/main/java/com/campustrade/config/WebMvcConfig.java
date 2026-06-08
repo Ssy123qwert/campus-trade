@@ -9,7 +9,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/");
+        // 只映射 /uploads/ 路径，不覆盖 Spring Boot 默认的静态资源配置
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:/opt/campus-trade/uploads/");
     }
 }

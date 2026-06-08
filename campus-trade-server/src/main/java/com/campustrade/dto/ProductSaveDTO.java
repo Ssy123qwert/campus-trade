@@ -31,6 +31,7 @@ public class ProductSaveDTO {
     private String category;
     private String images;
     private String videoUrl;
+    private Integer status; // 商品状态 1在售 2已售 3已下架
 
     @NotNull(message = "成色不能为空")
     private Integer condition;

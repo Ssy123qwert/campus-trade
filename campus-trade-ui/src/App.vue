@@ -35,7 +35,7 @@ export default {
   setup() {
     const route = useRoute()
     const showTabBar = computed(() => {
-      return !['/login', '/register', '/detail', '/chat', '/messages'].some(p => route.path.startsWith(p))
+      return !['/login', '/register', '/detail', '/chat', '/messages', '/review', '/reviews'].some(p => route.path.startsWith(p))
     })
     return { showTabBar }
   }

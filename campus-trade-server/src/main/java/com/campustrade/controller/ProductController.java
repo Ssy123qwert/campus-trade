@@ -82,6 +82,7 @@ public class ProductController {
         product.setOriginalPrice(dto.getOriginalPrice());
         product.setCategory(dto.getCategory());
         product.setImages(dto.getImages());
+        product.setVideoUrl(dto.getVideoUrl());
         product.setCondition(dto.getCondition());
         productService.updateById(product);
         return R.ok(productService.getById(product.getId()));

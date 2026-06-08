@@ -26,8 +26,8 @@
     <!-- 排序 -->
     <div class="sort-bar">
       <span :class="{ active: sort === 'time_desc' }" @click="sort = 'time_desc'; loadProducts()">最新</span>
-      <span :class="{ active: sort === 'price_asc' }" @click="sort = 'price_asc'; loadProducts()">价格↑</span>
-      <span :class="{ active: sort === 'price_desc' }" @click="sort = 'price_desc'; loadProducts()">价格↓</span>
+      <span :class="{ active: sort === 'price_asc' }" @click="sort = 'price_asc'; loadProducts()">价格从低到高</span>
+      <span :class="{ active: sort === 'price_desc' }" @click="sort = 'price_desc'; loadProducts()">价格从高到低</span>
     </div>
 
     <!-- 商品列表 -->
@@ -130,12 +130,20 @@ export default {
       return map[c] || ''
     }
 
+    const loadAnnouncement = async () => {
+      try {
+        const res = await api.getAnnouncement()
+        if (res.code === 200 && res.data) announcement.value = res.data
+      } catch (e) { /* 公告加载失败不影响主页 */ }
+    }
+
     onMounted(() => {
       loadCategories()
       loadProducts()
+      loadAnnouncement()
     })
 
-    return { keyword, categories, activeCategory, sort, products, loading, hasMore,
+    return { keyword, categories, activeCategory, sort, products, loading, hasMore, announcement,
              search, filterCategory, loadMore, goDetail, getFirstImage, conditionText }
   }
 }
@@ -144,6 +152,10 @@ export default {
 <style scoped>
 .header { padding: 15px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; text-align: center; }
 .header h1 { font-size: 18px; }
+
+.announcement { margin: 10px 15px; padding: 10px 14px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; display: flex; align-items: flex-start; gap: 8px; }
+.ann-icon { flex-shrink: 0; }
+.ann-text { font-size: 13px; color: #8c6d00; line-height: 1.5; }
 
 .search-bar { display: flex; padding: 10px 15px; gap: 10px; }
 .search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; }

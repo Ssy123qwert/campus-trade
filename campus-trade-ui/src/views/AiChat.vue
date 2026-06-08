@@ -28,7 +28,11 @@
 </template>
 
 <script>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick } from 'vue'
+
+const DEEPSEEK_KEY = 'sk-YOUR_KEY_HERE'
+const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions'
+const SYSTEM_PROMPT = '你是校园二手交易平台的AI助手。你的职责是：\n1. 为用户提供二手商品选购建议\n2. 帮助用户评估商品合理价格\n3. 提供二手交易注意事项和安全建议\n4. 回答关于校园二手交易的各种问题\n请用友好、专业的语气回答，每次回答控制在200字以内。'
 
 export default {
   name: 'AiChat',
@@ -52,29 +56,41 @@ export default {
       await scrollBottom()
 
       try {
-        const res = await fetch('/api/ai/chat', {
+        const res = await fetch(DEEPSEEK_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: text })
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + DEEPSEEK_KEY
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: text }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          })
         })
-        const data = await res.json()
-        if (data.code === 200) {
-          messages.value.push({ role: 'ai', content: data.data })
+        if (res.ok) {
+          const data = await res.json()
+          const content = data.choices?.[0]?.message?.content
+          if (content) {
+            messages.value.push({ role: 'ai', content: content.trim() })
+          } else {
+            messages.value.push({ role: 'ai', content: 'AI已收到你的问题，但暂时无法解析回复。' })
+          }
         } else {
-          messages.value.push({ role: 'ai', content: '抱歉，AI服务暂时不可用：' + data.msg })
+          messages.value.push({ role: 'ai', content: 'AI服务暂时不可用，请稍后重试。' })
         }
       } catch (e) {
-        messages.value.push({ role: 'ai', content: 'AI服务连接失败，请稍后重试。' })
+        messages.value.push({ role: 'ai', content: 'AI服务连接失败，请检查网络后重试。' })
       }
       loading.value = false
       await scrollBottom()
     }
 
-    const ask = (q) => {
-      input.value = q
-      send()
-    }
-
+    const ask = (q) => { input.value = q; send() }
     return { messages, input, loading, chatList, send, ask }
   }
 }
@@ -83,12 +99,10 @@ export default {
 <style scoped>
 .ai-page { display: flex; flex-direction: column; height: calc(100vh - 55px); }
 .header { padding: 15px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; text-align: center; font-size: 17px; font-weight: bold; }
-
 .intro { padding: 12px 15px; background: #f9f9f9; }
 .intro p { font-size: 13px; color: #666; margin-bottom: 8px; }
 .tips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tips span { padding: 5px 10px; background: #e8f5e9; color: #07c160; border-radius: 15px; font-size: 12px; cursor: pointer; }
-
 .chat-list { flex: 1; overflow-y: auto; padding: 12px; }
 .msg { margin-bottom: 12px; display: flex; }
 .msg.user { justify-content: flex-end; }
@@ -96,7 +110,6 @@ export default {
 .msg.ai .bubble { background: #f0f0f0; color: #333; }
 .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.6; word-break: break-word; }
 .typing { color: #999; font-style: italic; }
-
 .input-bar { display: flex; padding: 10px 12px; gap: 8px; border-top: 1px solid #eee; background: #fff; }
 .input-bar input { flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; }
 .input-bar button { padding: 10px 18px; background: #07c160; color: #fff; border: none; border-radius: 20px; font-size: 14px; cursor: pointer; white-space: nowrap; }

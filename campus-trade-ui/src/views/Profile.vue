@@ -11,6 +11,7 @@
       <div class="menu">
         <div class="menu-item" @click="$router.push('/my-products')">我的发布</div>
         <div class="menu-item" @click="$router.push('/orders')">我的订单</div>
+        <div class="menu-item" @click="$router.push('/reviews/' + (user?.id || 0))">我的评价</div>
         <div class="menu-item" @click="$router.push('/messages')">
           我的消息
           <span class="badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
