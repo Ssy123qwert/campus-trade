@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="orders-page">
     <header class="header">我的订单</header>
     <div class="tabs">
@@ -29,9 +29,6 @@
         </div>
         <div class="order-actions" v-else-if="tab === 'buyer' && order.status === 2">
           <button @click="confirm(order.id)">确认收货</button>
-        </div>
-        <div class="order-actions" v-else-if="order.status === 3">
-          <button v-if="tab === 'buyer'" class="review-btn" @click="$router.push('/review/' + order.id)">写评价</button>
         </div>
       </div>
     </div>

@@ -92,12 +92,12 @@ public class AiController {
                 }
                 return R.ok("AI已收到你的问题，但暂时无法解析回复。");
             } else {
-                log.warn("AI API 返回错误状态码: {}", response.statusCode());
-                return R.fail("AI服务暂时不可用，请稍后重试");
+                log.warn("AI API 返回错误状态码: {}, body: {}", response.statusCode(), response.body());
+                return R.fail("AI服务暂时不可用(" + response.statusCode() + "): " + response.body());
             }
         } catch (Exception e) {
             log.error("AI服务调用失败", e);
-            return R.fail("AI服务调用失败，请稍后重试");
+            return R.fail("AI服务调用失败: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
     }
 }
