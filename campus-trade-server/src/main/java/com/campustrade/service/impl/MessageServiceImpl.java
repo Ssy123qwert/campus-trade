@@ -94,10 +94,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             productIds.add(msg.getProductId());
         }
 
-        Map<Long, User> userMap = userService.listByIds(userIds).stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
-        Map<Long, Product> productMap = productService.listByIds(productIds).stream()
-                .collect(Collectors.toMap(Product::getId, p -> p));
+        Map<Long, User> userMap = userIds.isEmpty() ? new HashMap<>() :
+                userService.listByIds(userIds).stream().collect(Collectors.toMap(User::getId, u -> u));
+        Map<Long, Product> productMap = productIds.isEmpty() ? new HashMap<>() :
+                productService.listByIds(productIds).stream().collect(Collectors.toMap(Product::getId, p -> p));
 
         // 批量查询未读数
         Map<String, Long> unreadMap = new HashMap<>();

@@ -50,4 +50,7 @@ export const api = {
   toggleFavorite: (userId, productId) => request("/favorite/toggle?userId=" + userId + "&productId=" + productId, { method: "POST" }),
   getMyFavorites: (userId) => request("/favorite/my?userId=" + userId),
   checkFavorite: (userId, productId) => request("/favorite/check?userId=" + userId + "&productId=" + productId),
+  createReview: (data) => request("/review/create", { method: "POST", body: JSON.stringify(data) }),
+  getUserReviews: (userId, page = 1) => request("/review/user/" + userId + "?page=" + page + "&size=10"),
+  getReviewRate: (userId) => request("/review/rate/" + userId),
 }

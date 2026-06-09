@@ -150,38 +150,48 @@ export default {
 </script>
 
 <style scoped>
-.header { padding: 15px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; text-align: center; }
-.header h1 { font-size: 18px; }
+.header { padding: 18px 16px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; text-align: center; position: sticky; top: 0; z-index: 50; }
+.header h1 { font-size: 20px; font-weight: 600; letter-spacing: 1px; }
+.header p { font-size: 12px; opacity: 0.8; margin-top: 4px; }
 
-.announcement { margin: 10px 15px; padding: 10px 14px; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; display: flex; align-items: flex-start; gap: 8px; }
-.ann-icon { flex-shrink: 0; }
-.ann-text { font-size: 13px; color: #8c6d00; line-height: 1.5; }
+.announcement { margin: 12px 16px; padding: 12px 16px; background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 1px solid #fde68a; border-radius: 12px; display: flex; align-items: center; gap: 10px; }
+.ann-icon { font-size: 18px; flex-shrink: 0; }
+.ann-text { font-size: 13px; color: #92400e; line-height: 1.5; }
 
-.search-bar { display: flex; padding: 10px 15px; gap: 10px; }
-.search-bar input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; }
-.search-bar button { padding: 8px 16px; background: #07c160; color: #fff; border: none; border-radius: 20px; font-size: 14px; cursor: pointer; }
+.search-bar { display: flex; padding: 12px 16px; gap: 10px; }
+.search-bar input { flex: 1; padding: 12px 16px; border: 1.5px solid #eee; border-radius: 25px; font-size: 14px; outline: none; background: #f5f5f7; transition: all 0.3s; }
+.search-bar input:focus { border-color: #07c160; background: #fff; box-shadow: 0 0 0 3px rgba(7,193,96,0.1); }
+.search-bar button { padding: 12px 24px; background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; border: none; border-radius: 25px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.search-bar button:active { transform: scale(0.96); }
 
-.categories { display: flex; padding: 0 15px 10px; gap: 8px; overflow-x: auto; white-space: nowrap; }
-.categories span { padding: 5px 12px; background: #f0f0f0; border-radius: 15px; font-size: 12px; cursor: pointer; flex-shrink: 0; }
-.categories span.active { background: #07c160; color: #fff; }
+.categories { display: flex; padding: 0 16px 12px; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.categories::-webkit-scrollbar { display: none; }
+.categories span { padding: 6px 16px; background: #fff; border: 1.5px solid #eee; border-radius: 20px; font-size: 12px; cursor: pointer; flex-shrink: 0; transition: all 0.2s; font-weight: 500; }
+.categories span:hover { border-color: #07c160; }
+.categories span.active { background: linear-gradient(135deg, #07c160, #06ad56); color: #fff; border-color: transparent; }
 
-.sort-bar { display: flex; padding: 0 15px 10px; gap: 15px; font-size: 13px; color: #666; }
-.sort-bar span { cursor: pointer; }
-.sort-bar span.active { color: #07c160; font-weight: bold; }
+.sort-bar { display: flex; padding: 0 16px 12px; gap: 12px; font-size: 13px; }
+.sort-bar span { cursor: pointer; color: #999; padding: 4px 0; transition: color 0.2s; }
+.sort-bar span.active { color: #07c160; font-weight: 600; position: relative; }
+.sort-bar span.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background: #07c160; border-radius: 1px; }
 
-.product-grid { padding: 0 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.product-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; }
-.product-img { position: relative; height: 150px; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.product-img img { width: 100%; height: 100%; object-fit: cover; }
-.condition { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 8px; }
-.product-info { padding: 8px; }
-.product-info h3 { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.desc { font-size: 11px; color: #999; margin: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product-grid { padding: 0 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.product-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: all 0.3s; }
+.product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.product-card:active { transform: scale(0.98); }
+.product-img { position: relative; height: 160px; background: linear-gradient(135deg, #f5f5f7, #e8e8ec); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.product-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.product-card:hover .product-img img { transform: scale(1.05); }
+.condition { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 8px; font-weight: 500; }
+.product-info { padding: 10px 12px 12px; }
+.product-info h3 { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #1a1a1a; }
+.desc { font-size: 11px; color: #999; margin: 4px 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .price-row { display: flex; align-items: center; gap: 6px; }
-.price { color: #f44; font-size: 16px; font-weight: bold; }
+.price { color: #f44; font-size: 17px; font-weight: 700; }
 .original { color: #ccc; font-size: 11px; text-decoration: line-through; }
 .views { font-size: 10px; color: #bbb; margin-left: auto; }
 
-.loading, .empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
-.load-more { text-align: center; padding: 15px; color: #07c160; font-size: 14px; cursor: pointer; }
+.loading, .empty { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
+.load-more { text-align: center; padding: 16px; margin: 8px 16px 16px; color: #667eea; font-size: 14px; cursor: pointer; border: 1.5px dashed #ddd; border-radius: 12px; background: #fff; transition: all 0.2s; }
+.load-more:hover { border-color: #667eea; background: #f8f7ff; }
 </style>

@@ -1,28 +1,60 @@
 <template>
   <div class="profile-page">
     <div v-if="user">
+      <div class="header-bg"></div>
       <div class="user-card">
         <div class="avatar">{{ user.nickname?.[0] || '?' }}</div>
         <div class="user-info">
           <h3>{{ user.nickname || user.username }}</h3>
           <p>{{ user.school || '未设置学校' }}</p>
         </div>
+        <div class="rate-badge" v-if="rate >= 0">
+          <span class="rate-num">{{ rate }}%</span>
+          <span class="rate-label">好评率</span>
+        </div>
       </div>
       <div class="menu">
-        <div class="menu-item" @click="$router.push('/my-products')">我的发布</div>
-        <div class="menu-item" @click="$router.push('/orders')">我的订单</div>
-        <div class="menu-item" @click="$router.push('/reviews/' + (user?.id || 0))">我的评价</div>
-        <div class="menu-item" @click="$router.push('/messages')">
-          我的消息
-          <span class="badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
+        <div class="menu-item" @click="$router.push('/my-products')">
+          <span class="mi-icon">📦</span>
+          <span>我的发布</span>
+          <span class="mi-arrow">›</span>
         </div>
-        <div class="menu-item" @click="$router.push('/ai-chat')">AI 智能助手</div>
-        <div class="menu-item admin-item" v-if="isAdmin" @click="$router.push('/admin')">⚙️ 管理后台</div>
-        <div class="menu-item logout" @click="logout">退出登录</div>
+        <div class="menu-item" @click="$router.push('/orders')">
+          <span class="mi-icon">📋</span>
+          <span>我的订单</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item" @click="$router.push('/reviews/' + (user?.id || 0))">
+          <span class="mi-icon">⭐</span>
+          <span>我的评价</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item" @click="$router.push('/messages')">
+          <span class="mi-icon">💬</span>
+          <span>我的消息</span>
+          <span class="badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item" @click="$router.push('/ai-chat')">
+          <span class="mi-icon">🤖</span>
+          <span>AI 智能助手</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item" v-if="isAdmin" @click="$router.push('/admin')">
+          <span class="mi-icon">⚙️</span>
+          <span>管理后台</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item logout" @click="logout">
+          <span class="mi-icon">🚪</span>
+          <span>退出登录</span>
+          <span class="mi-arrow">›</span>
+        </div>
       </div>
     </div>
     <div class="login-tip" v-else>
-      <p>请先登录</p>
+      <div class="tip-icon">🛒</div>
+      <p>登录后查看更多功能</p>
       <button @click="$router.push('/login')">去登录</button>
     </div>
   </div>
@@ -40,6 +72,13 @@ export default {
     const user = ref(null)
     const unreadCount = ref(0)
     const isAdmin = ref(false)
+    const rate = ref(-1)
+
+    const loadRate = async () => {
+      if (!user.value) return
+      const res = await api.getReviewRate(user.value.id)
+      if (res.code === 200 && res.data >= 0) rate.value = res.data
+    }
 
     const loadUnread = async () => {
       if (!user.value) return
@@ -56,6 +95,7 @@ export default {
       user.value = JSON.parse(localStorage.getItem('user') || 'null')
       loadUnread()
       checkAdmin()
+      loadRate()
     })
 
     const logout = () => {
@@ -65,23 +105,33 @@ export default {
       router.push('/')
     }
 
-    return { user, unreadCount, isAdmin, logout }
+    return { user, unreadCount, isAdmin, rate, logout }
   }
 }
 </script>
 
 <style scoped>
-.user-card { display: flex; align-items: center; gap: 15px; padding: 25px 20px; background: linear-gradient(135deg, #07c160, #06ad56); }
-.avatar { width: 55px; height: 55px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; }
-.user-info h3 { color: #fff; font-size: 18px; }
-.user-info p { color: rgba(255,255,255,0.8); font-size: 13px; margin-top: 4px; }
-.menu { margin-top: 10px; background: #fff; }
-.menu-item { padding: 15px 20px; border-bottom: 1px solid #f5f5f5; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-.badge { background: #f44; color: #fff; font-size: 11px; padding: 2px 7px; border-radius: 10px; }
-.menu-item:active { background: #f5f5f5; }
-.badge { display: inline-block; background: #f44; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
-.admin-item { color: #07c160; font-weight: bold; }
-.logout { color: #f44; text-align: center; }
-.login-tip { text-align: center; padding: 80px 20px; }
-.login-tip button { margin-top: 15px; padding: 10px 30px; background: #07c160; color: #fff; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+.header-bg { height: 140px; background: linear-gradient(135deg, #07c160 0%, #06ad56 100%); border-radius: 0 0 24px 24px; }
+.user-card { display: flex; align-items: center; gap: 15px; padding: 0 20px; margin-top: -70px; }
+.avatar { width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #07c160, #06ad56); display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; box-shadow: 0 4px 12px rgba(7,193,96,0.3); border: 3px solid #fff; flex-shrink: 0; }
+.user-info { flex: 1; }
+.user-info h3 { color: #1a1a1a; font-size: 20px; font-weight: 600; }
+.user-info p { color: #999; font-size: 13px; margin-top: 4px; }
+.rate-badge { background: #fff; padding: 8px 14px; border-radius: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.rate-num { display: block; font-size: 20px; font-weight: 700; color: #f59e0b; }
+.rate-label { font-size: 10px; color: #999; }
+.menu { margin: 16px 16px 0; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.menu-item { padding: 16px 18px; background: #fff; border-bottom: 1px solid #f5f5f7; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: #f5f5f7; }
+.mi-icon { font-size: 20px; width: 24px; text-align: center; }
+.mi-arrow { margin-left: auto; color: #ccc; font-size: 18px; }
+.badge { background: #f44; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; margin-left: auto; }
+.admin-item { color: #07c160; }
+.logout { color: #f44; }
+.login-tip { text-align: center; padding: 100px 20px; }
+.tip-icon { font-size: 60px; margin-bottom: 16px; }
+.login-tip p { color: #999; font-size: 15px; }
+.login-tip button { margin-top: 20px; padding: 12px 36px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.login-tip button:active { transform: scale(0.98); }
 </style>
