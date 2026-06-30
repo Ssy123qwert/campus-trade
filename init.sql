@@ -149,6 +149,7 @@ CREATE TABLE `t_product` (
   `original_price` decimal(10,2) DEFAULT NULL,
   `category` varchar(50) DEFAULT NULL,
   `images` text,
+  `video_url` varchar(500) DEFAULT NULL,
   `condition` int DEFAULT '1',
   `status` int DEFAULT '1',
   `view_count` int DEFAULT '0',
