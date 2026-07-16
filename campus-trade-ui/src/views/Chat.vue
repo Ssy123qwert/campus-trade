@@ -39,7 +39,9 @@ export default {
   name: 'Chat',
   setup() {
     const route = useRoute()
-    const userId = ref(Number(localStorage.getItem('userId') || '0'))
+    const userStr = localStorage.getItem('user')
+    const currentUser = userStr ? JSON.parse(userStr) : null
+    const userId = ref(currentUser?.id || 0)
     const otherUserId = ref(Number(route.query.otherUserId || '0'))
     const productId = ref(Number(route.query.productId || '0'))
     const messages = ref([])
@@ -52,7 +54,7 @@ export default {
     const productImage = ref('')
 
     const loadOtherUser = async () => {
-      const res = await api.getUserInfo(otherUserId.value)
+      const res = await api.getPublicUserInfo(otherUserId.value)
       if (res.code === 200) otherUser.value = res.data
     }
 
@@ -70,7 +72,7 @@ export default {
     }
 
     const loadMessages = async () => {
-      const res = await api.getConversation(userId.value, otherUserId.value, productId.value)
+      const res = await api.getConversation(otherUserId.value, productId.value)
       if (res.code === 200) messages.value = res.data
       await nextTick()
       scrollToBottom()
@@ -86,7 +88,7 @@ export default {
       const text = inputText.value.trim()
       if (!text) return
       inputText.value = ''
-      const res = await api.sendMessage(userId.value, otherUserId.value, productId.value, text)
+      const res = await api.sendMessage(otherUserId.value, productId.value, text)
       if (res.code === 200) {
         messages.value.push(res.data)
         await nextTick()

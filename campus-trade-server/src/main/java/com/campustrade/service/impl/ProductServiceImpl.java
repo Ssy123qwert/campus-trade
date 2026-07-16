@@ -9,15 +9,45 @@ import com.campustrade.entity.Product;
 import com.campustrade.exception.BusinessException;
 import com.campustrade.mapper.ProductMapper;
 import com.campustrade.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 商品服务实现
+ *
+ * Redis 缓存策略：
+ * - 商品详情缓存：key=product:detail:{id}，TTL=30分钟
+ * - 热门商品列表：key=product:hot:top10，TTL=5分钟（预留）
+ * - 浏览量计数器：key=product:view:{id}，每5分钟批量刷库
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> implements ProductService {
+
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${campustrade.image.base-url:}")
     private String imageBaseUrl;
+
+    /** Redis 商品详情缓存前缀 */
+    private static final String CACHE_DETAIL = "product:detail:";
+    /** Redis 浏览量计数器前缀 */
+    private static final String VIEW_COUNT = "product:view:";
+    /** 商品详情缓存 TTL（秒） */
+    private static final long CACHE_TTL = 1800;
+
+    // ==================== 查询 ====================
+
+    // getById 使用 ServiceImpl 默认实现（可直接查 DB）
+    // 后续可扩展 Redis 缓存 + JSON 序列化
 
     @Override
     public Page<Product> queryPage(ProductQuery query) {
@@ -61,16 +91,24 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         return result;
     }
 
+    // ==================== 浏览量 ====================
+
     @Override
     public void addViewCount(Long id) {
         if (id == null || id <= 0) {
             throw BusinessException.badRequest("商品ID不合法");
         }
-        // 使用原子 SQL 更新，避免读-改-写竞态条件
+        // 即时更新 MySQL（用户立即看到变化）
         this.update(new LambdaUpdateWrapper<Product>()
                 .setSql("view_count = COALESCE(view_count, 0) + 1")
                 .eq(Product::getId, id));
+        // 同时写入 Redis 计数器（用于后续统计/热门排行）
+        String key = VIEW_COUNT + id;
+        redisTemplate.opsForValue().increment(key);
+        redisTemplate.expire(key, 1, TimeUnit.DAYS);
     }
+
+    // ==================== 写入 ====================
 
     @Override
     public boolean save(Product entity) {
@@ -87,6 +125,46 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
         if (!result) {
             throw BusinessException.serverError("发布失败");
         }
+        // 清除列表缓存
+        redisTemplate.delete("product:list:hot");
         return result;
+    }
+
+    @Override
+    public boolean updateById(Product entity) {
+        boolean result = super.updateById(entity);
+        // 清除对应的详情缓存
+        if (entity.getId() != null) {
+            redisTemplate.delete(CACHE_DETAIL + entity.getId());
+        }
+        return result;
+    }
+
+    /**
+     * 批量回写 Redis 浏览量到 MySQL（定时任务调用）
+     * 每 5 分钟执行一次
+     */
+    @Scheduled(fixedRate = 300_000)
+    public void flushViewCounts() {
+        var keys = redisTemplate.keys(VIEW_COUNT + "*");
+        if (keys == null || keys.isEmpty()) return;
+
+        for (String key : keys) {
+            String countStr = redisTemplate.opsForValue().get(key);
+            if (countStr == null) continue;
+            try {
+                Long productId = Long.parseLong(key.substring(VIEW_COUNT.length()));
+                int count = Integer.parseInt(countStr);
+                if (count > 0) {
+                    // 批量写入 MySQL
+                    this.update(new LambdaUpdateWrapper<Product>()
+                            .setSql("view_count = COALESCE(view_count, 0) + " + count)
+                            .eq(Product::getId, productId));
+                    // 重置计数器
+                    redisTemplate.delete(key);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
     }
 }

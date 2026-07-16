@@ -16,6 +16,9 @@ import Messages from './views/Messages.vue'
 import Admin from './views/Admin.vue'
 import UserReviews from './views/UserReviews.vue'
 import CreateReview from './views/CreateReview.vue'
+import Notifications from './views/Notifications.vue'
+import MyOffers from './views/MyOffers.vue'
+import Statistics from './views/Statistics.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -31,7 +34,10 @@ const routes = [
   { path: '/messages', component: Messages },
   { path: '/admin', component: Admin },
   { path: '/reviews/:userId', component: UserReviews },
-  { path: '/review/:orderId', component: CreateReview }
+  { path: '/review/:orderId', component: CreateReview },
+  { path: '/notifications', component: Notifications },
+  { path: '/offers', component: MyOffers },
+  { path: '/statistics', component: Statistics }
 ]
 
 const router = createRouter({

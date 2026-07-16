@@ -34,12 +34,11 @@ export default {
   name: 'Messages',
   setup() {
     const router = useRouter()
-    const userId = ref(Number(localStorage.getItem('userId') || '0'))
     const conversations = ref([])
     let timer = null
 
     const loadConversations = async () => {
-      const res = await api.getConversationList(userId.value)
+      const res = await api.getConversationList()
       if (res.code === 200) conversations.value = res.data
     }
 

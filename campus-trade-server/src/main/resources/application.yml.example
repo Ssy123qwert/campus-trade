@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: campus-trade
+  datasource:
+    url: jdbc:mysql://localhost:3306/campus_trade?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: "YOUR_PASSWORD"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 200MB
+  web:
+    resources:
+      static-locations: classpath:/static/
+  # ===== Redis 缓存 =====
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:       # 本地 Redis 无密码
+      timeout: 5000   # 连接超时（毫秒）
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+  # ===== Elasticsearch 搜索引擎 =====
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+  # ===== RabbitMQ 消息队列 =====
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+
+server:
+  port: 8080
+
+# ===== JWT 配置 =====
+jwt:
+  secret: CampusTradeJwtSecret2024KeyMustBeAtLeast256BitsLongForHS256
+  access-token-expire: 7200        # Access Token 有效期 2 小时（秒）
+  refresh-token-expire: 604800     # Refresh Token 有效期 7 天（秒）
+
+campustrade:
+  upload:
+    path: e:/CodeBuddy-work space/campus-trade/campus-trade-server/uploads
+  image:
+    base-url:
+  ai:
+    api-key: ${DEEPSEEK_API_KEY}
+    api-url: https://api.deepseek.com/v1/chat/completions
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto

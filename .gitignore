@@ -13,5 +13,17 @@ $null
 # 临时文件
 *_new.js
 
-# 包含敏感信息的配置文件（API Key等）
+# 包含敏感信息的配置文件（API Key/密码等）
 application.properties
+application.yml
+application.properties.bak
+
+# 部署包
+campus-trade-deploy/
+
+# 答辩文档
+答辩话术参考.md
+
+# 项目总结
+项目改造总结报告.md
+conversation-log.md

@@ -13,6 +13,21 @@
           <span class="rate-label">好评率</span>
         </div>
       </div>
+      <!-- 统计数据卡片 -->
+      <div class="stats-row" v-if="stats">
+        <div class="stat-card">
+          <span class="stat-num">{{ stats.productCount }}</span>
+          <span class="stat-label">发布</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">{{ stats.soldCount }}</span>
+          <span class="stat-label">卖出</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num">{{ stats.boughtCount }}</span>
+          <span class="stat-label">买入</span>
+        </div>
+      </div>
       <div class="menu">
         <div class="menu-item" @click="$router.push('/my-products')">
           <span class="mi-icon">📦</span>
@@ -22,6 +37,11 @@
         <div class="menu-item" @click="$router.push('/orders')">
           <span class="mi-icon">📋</span>
           <span>我的订单</span>
+          <span class="mi-arrow">›</span>
+        </div>
+        <div class="menu-item" @click="$router.push('/offers')">
+          <span class="mi-icon">💰</span>
+          <span>我的出价</span>
           <span class="mi-arrow">›</span>
         </div>
         <div class="menu-item" @click="$router.push('/reviews/' + (user?.id || 0))">
@@ -73,6 +93,7 @@ export default {
     const unreadCount = ref(0)
     const isAdmin = ref(false)
     const rate = ref(-1)
+    const stats = ref(null)
 
     const loadRate = async () => {
       if (!user.value) return
@@ -81,31 +102,43 @@ export default {
     }
 
     const loadUnread = async () => {
-      if (!user.value) return
-      const res = await api.getUnreadCount(user.value.id)
+      const res = await api.getUnreadCount()
       if (res.code === 200) unreadCount.value = res.data
+    }
+
+    const loadStats = async () => {
+      const res = await api.getProfileStats()
+      if (res.code === 200) stats.value = res.data
     }
 
     const checkAdmin = async () => {
       const res = await api.checkAdmin()
       if (res.code === 200) isAdmin.value = res.data
+      // 防抖：如果 API 没返回，也从本地用户信息判断
+      if (!isAdmin.value) {
+        const u = JSON.parse(localStorage.getItem('user') || 'null')
+        if (u && u.role === 1) isAdmin.value = true
+      }
     }
 
     onMounted(() => {
       user.value = JSON.parse(localStorage.getItem('user') || 'null')
       loadUnread()
+      loadStats()
       checkAdmin()
       loadRate()
     })
 
     const logout = () => {
-      localStorage.removeItem('token')
+      api.logout().catch(() => {})  // 后端清除 refreshToken
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       user.value = null
       router.push('/')
     }
 
-    return { user, unreadCount, isAdmin, rate, logout }
+    return { user, unreadCount, isAdmin, rate, logout, stats }
   }
 }
 </script>
@@ -117,6 +150,10 @@ export default {
 .user-info { flex: 1; }
 .user-info h3 { color: #1a1a1a; font-size: 20px; font-weight: 600; }
 .user-info p { color: #999; font-size: 13px; margin-top: 4px; }
+.stats-row { display: flex; gap: 10px; padding: 16px 16px 0; }
+.stat-card { flex: 1; background: #fff; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+.stat-num { display: block; font-size: 22px; font-weight: 700; color: #07c160; }
+.stat-label { font-size: 11px; color: #999; margin-top: 4px; display: block; }
 .rate-badge { background: #fff; padding: 8px 14px; border-radius: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 .rate-num { display: block; font-size: 20px; font-weight: 700; color: #f59e0b; }
 .rate-label { font-size: 10px; color: #999; }
@@ -134,4 +171,17 @@ export default {
 .login-tip p { color: #999; font-size: 15px; }
 .login-tip button { margin-top: 20px; padding: 12px 36px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .login-tip button:active { transform: scale(0.98); }
+
+/* 桌面: 资料页居中加宽 */
+@media (min-width: 768px) {
+  .profile-page { max-width: 600px; margin: 0 auto; }
+  .header-bg { height: 180px; }
+  .user-card { padding: 0 32px; margin-top: -80px; }
+  .avatar { width: 80px; height: 80px; font-size: 34px; }
+  .user-info h3 { font-size: 24px; }
+  .rate-badge { padding: 12px 18px; }
+  .rate-num { font-size: 24px; }
+  .menu { margin: 20px 20px 0; }
+  .menu-item { padding: 18px 20px; font-size: 16px; }
+}
 </style>

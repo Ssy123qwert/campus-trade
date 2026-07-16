@@ -10,11 +10,15 @@ import java.time.LocalDateTime;
 public class Order {
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String orderNo;
     private Long productId;
     private Long buyerId;
     private Long sellerId;
     private BigDecimal amount;
-    private Integer status;  // 1待发货 2已发货 3已完成 4已取消
+    private Integer status;  // 0待支付 1已支付 2已发货 3已完成 4已取消
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+    private LocalDateTime payTime;
+    private LocalDateTime cancelTime;
 }

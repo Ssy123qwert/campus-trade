@@ -14,6 +14,10 @@
         <span class="tab-icon">🤖</span>
         <span class="tab-text">AI助手</span>
       </router-link>
+      <router-link to="/messages" class="tab-item" :class="{ active: $route.path === '/messages' }">
+        <span class="tab-icon">💬</span>
+        <span class="tab-text">消息</span>
+      </router-link>
       <router-link to="/orders" class="tab-item" :class="{ active: $route.path === '/orders' }">
         <span class="tab-icon">📋</span>
         <span class="tab-text">订单</span>
@@ -35,7 +39,7 @@ export default {
   setup() {
     const route = useRoute()
     const showTabBar = computed(() => {
-      return !['/login', '/register', '/detail', '/chat', '/messages', '/review', '/reviews'].some(p => route.path.startsWith(p))
+      return !['/login', '/register', '/detail', '/chat', '/review', '/reviews', '/notifications', '/offers'].some(p => route.path.startsWith(p))
     })
     return { showTabBar }
   }
@@ -46,7 +50,7 @@ export default {
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f5f7; color: #333; -webkit-font-smoothing: antialiased; }
 a { text-decoration: none; color: inherit; }
-#app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: #f5f5f7; position: relative; padding-bottom: 65px; }
+#app-container { width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; background: #f5f5f7; position: relative; padding-bottom: 65px; }
 
 .tab-bar {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -65,7 +69,8 @@ a { text-decoration: none; color: inherit; }
   content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   width: 20px; height: 3px; background: #07c160; border-radius: 0 0 3px 3px;
 }
-.tab-icon { font-size: 22px; margin-bottom: 2px; }
+.tab-icon { font-size: 22px; margin-bottom: 2px; position: relative; display: inline-block; }
+.badge { position: absolute; top: -6px; right: -10px; background: #f44; color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center; font-weight: bold; line-height: 1.4; }
 .tab-text { font-size: 10px; font-weight: 500; }
 
 /* 全局通用样式 */
@@ -79,4 +84,25 @@ a { text-decoration: none; color: inherit; }
 .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
 .input-field { padding: 14px 16px; border: 1.5px solid #eee; border-radius: 12px; font-size: 15px; outline: none; transition: border-color 0.2s; background: #fafafa; }
 .input-field:focus { border-color: #07c160; background: #fff; }
+
+/* 平板及以上适配 */
+@media (min-width: 600px) {
+  #app-container { max-width: 700px; }
+  .tab-bar { max-width: 700px; height: 64px; }
+  .tab-icon { font-size: 24px; }
+  .tab-text { font-size: 11px; }
+}
+/* 桌面端适配 */
+@media (min-width: 1024px) {
+  #app-container { max-width: 1200px; }
+  .tab-bar {
+    max-width: 720px;
+    border-radius: 20px 20px 0 0;
+    height: 68px;
+  }
+  .tab-item { padding: 8px 0; }
+  .tab-icon { font-size: 26px; }
+  .tab-text { font-size: 12px; }
+  .page-header { font-size: 20px; padding: 20px 16px; }
+}
 </style>

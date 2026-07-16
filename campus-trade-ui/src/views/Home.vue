@@ -194,4 +194,32 @@ export default {
 .loading, .empty { text-align: center; padding: 60px 20px; color: #999; font-size: 14px; }
 .load-more { text-align: center; padding: 16px; margin: 8px 16px 16px; color: #667eea; font-size: 14px; cursor: pointer; border: 1.5px dashed #ddd; border-radius: 12px; background: #fff; transition: all 0.2s; }
 .load-more:hover { border-color: #667eea; background: #f8f7ff; }
+
+/* 平板: 3列商品 + 大图 */
+@media (min-width: 600px) {
+  .product-grid { grid-template-columns: 1fr 1fr 1fr; gap: 16px; padding: 0 16px; }
+  .product-img { height: 200px; }
+  .product-info h3 { font-size: 15px; }
+  .price { font-size: 18px; }
+  .search-bar { padding: 16px 20px; }
+  .categories { padding: 0 20px 16px; }
+  .sort-bar { padding: 0 20px 16px; }
+  .load-more { margin: 12px 20px 20px; }
+}
+/* 桌面: 4列商品 + 更大图 */
+@media (min-width: 1024px) {
+  .product-grid { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; padding: 0 24px; }
+  .product-img { height: 220px; }
+  .product-info { padding: 14px 16px 16px; }
+  .product-info h3 { font-size: 16px; }
+  .desc { font-size: 12px; }
+  .price { font-size: 20px; }
+  .product-grid > .product-card { border-radius: 16px; }
+  .header { padding: 20px 24px; }
+  .header h1 { font-size: 24px; }
+  .search-bar { padding: 16px 24px; }
+  .categories { padding: 0 24px 16px; }
+  .sort-bar { padding: 0 24px 16px; }
+  .announcement { margin: 12px 24px; }
+}
 </style>

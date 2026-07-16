@@ -11,6 +11,7 @@
       <span :class="{ active: tab === 'products' }" @click="tab = 'products'; loadProducts()">商品管理</span>
       <span :class="{ active: tab === 'users' }" @click="tab = 'users'; loadUsers()">用户管理</span>
       <span :class="{ active: tab === 'announcement' }" @click="tab = 'announcement'; loadAnnouncements()">公告管理</span>
+      <span class="dashboard-link" @click="$router.push('/statistics')">📊 数据看板</span>
     </div>
 
     <!-- 商品管理 -->

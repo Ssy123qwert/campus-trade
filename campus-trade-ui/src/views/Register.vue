@@ -41,10 +41,10 @@ export default {
 </script>
 
 <style scoped>
-.register-page { display: flex; flex-direction: column; align-items: center; padding-top: 60px; min-height: 100vh; background: #f5f5f5; }
+.register-page { display: flex; flex-direction: column; align-items: center; padding: 60px 16px 0; min-height: 100vh; background: #f5f5f5; }
 .logo { font-size: 22px; font-weight: bold; color: #07c160; margin-bottom: 30px; }
-.form { width: 300px; display: flex; flex-direction: column; gap: 12px; }
-.form input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; }
+.form { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 12px; }
+.form input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; width: 100%; box-sizing: border-box; }
 .form button { padding: 12px; background: #07c160; color: #fff; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
 .link { text-align: center; color: #07c160; font-size: 13px; cursor: pointer; }
 </style>

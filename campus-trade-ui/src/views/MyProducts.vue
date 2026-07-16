@@ -1,11 +1,7 @@
 <template>
   <div class="my-products-page">
     <header class="header">我的发布</header>
-    <div v-if="!user" class="login-tip">
-      <p>请先登录</p>
-      <button @click="$router.push('/login')">去登录</button>
-    </div>
-    <div v-else-if="products.length === 0" class="empty">暂无发布</div>
+    <div v-if="products.length === 0" class="empty">暂无发布</div>
     <div v-else class="product-list">
       <div v-for="item in products" :key="item.id" class="product-card">
         <div class="card-header">
@@ -30,12 +26,10 @@ import { api } from '../api'
 export default {
   name: 'MyProducts',
   setup() {
-    const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
     const products = ref([])
 
     const loadProducts = async () => {
-      if (!user.value) return
-      const res = await api.getMyProducts(user.value.id)
+      const res = await api.getMyProducts()
       if (res.code === 200) products.value = res.data
     }
 
@@ -54,7 +48,7 @@ export default {
 
     onMounted(loadProducts)
 
-    return { user, products, statusText, statusClass, offline, relist }
+    return { products, statusText, statusClass, offline, relist }
   }
 }
 </script>

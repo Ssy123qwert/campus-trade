@@ -1,83 +1,83 @@
 @echo off
-chcp 65001 >nul
-title 校园二手交易平台 - 一键启动
+title Campus Trade Platform - Starting...
 
-echo ============================================
-echo   校园二手交易平台 - 正在启动...
-echo ============================================
+echo ====================================
+echo   Campus Trade Platform v2.0
+echo ====================================
 echo.
 
-:: 设置项目根目录
-set "PROJECT_DIR=%~dp0"
-set "SERVER_DIR=%PROJECT_DIR%campus-trade-server"
-set "UI_DIR=%PROJECT_DIR%campus-trade-ui"
-
-:: 检查 MySQL 是否运行
-echo [1/3] 检查 MySQL 数据库...
-sc query MySQL | findstr "RUNNING" >nul
+:: Check Maven
+where mvn >nul 2>nul
 if %errorlevel% neq 0 (
-    echo [警告] MySQL 服务未运行，正在尝试启动...
-    net start MySQL >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [错误] MySQL 启动失败，请手动启动 MySQL 服务！
-        pause
-        exit /b 1
-    )
-)
-echo [√] MySQL 数据库已就绪
-echo.
-
-:: 编译并启动后端
-echo [2/3] 编译后端...
-cd /d "%SERVER_DIR%"
-call mvn clean package -DskipTests -q
-if %errorlevel% neq 0 (
-    echo [错误] 后端编译失败！
+    echo [ERROR] Maven not found. Please install Maven or check PATH.
     pause
     exit /b 1
 )
-echo [√] 后端编译完成
 
-echo 启动后端服务 (端口 8080)...
-start "校园二手-后端" java -jar "%SERVER_DIR%\target\campus-trade-server-1.0.0.jar"
-echo [√] 后端启动中，请稍候...
-echo.
+:: Check Redis
+echo [1/3] Checking Redis...
+tasklist /FI "IMAGENAME eq redis-server.exe" 2>nul | find /I "redis-server.exe" >nul
+if %errorlevel% neq 0 (
+    echo   - Redis not running, starting...
+    start /B "" "E:\Codebuddy-work space\redis-data\redis-server.exe" "E:\Codebuddy-work space\redis-data\redis.windows.conf"
+    ping -n 4 127.0.0.1 >nul
+    echo   [OK] Redis started
+) else (
+    echo   [OK] Redis is running
+)
 
-:: 等待后端就绪
-echo 等待后端就绪...
-:wait_backend
-timeout /t 2 /nobreak >nul
-curl -s -o NUL -w "%%{http_code}" http://localhost:8080/api/ai/chat -X POST -H "Content-Type: application/json" -d "{\"question\":\"ping\"}" 2>nul | findstr "200" >nul
-if %errorlevel% neq 0 goto wait_backend
-echo [√] 后端已就绪
+:: Check MySQL
 echo.
+echo [2/3] Checking MySQL...
+sc query MYSQL80 2>nul | find "RUNNING" >nul
+if %errorlevel% neq 0 (
+    echo   - MySQL not running, starting...
+    net start MYSQL80 >nul 2>nul
+    if %errorlevel% equ 0 (
+        echo   [OK] MySQL started
+    ) else (
+        echo   [!] MySQL start failed, please start manually
+    )
+) else (
+    echo   [OK] MySQL is running
+)
 
-:: 启动前端
-echo [3/3] 启动前端 (端口 5173)...
-cd /d "%UI_DIR%"
-start "校园二手-前端" cmd /c "npm run dev"
-echo [√] 前端启动中...
+:: Kill old Java process (port 8080)
 echo.
+echo [3/4] Stopping old server...
+taskkill /F /IM "java.exe" >nul 2>nul
+ping -n 3 127.0.0.1 >nul
+echo   [OK] Old process stopped
 
-:: 等待前端就绪
-echo 等待前端就绪...
-:wait_frontend
-timeout /t 2 /nobreak >nul
-curl -s -o NUL -w "%%{http_code}" http://localhost:5173 2>nul | findstr "200" >nul
-if %errorlevel% neq 0 goto wait_frontend
-echo [√] 前端已就绪
+:: Start backend
 echo.
+echo [4/4] Starting backend...
+cd /d "E:\Codebuddy-work space\campus-trade\campus-trade-server"
+if %errorlevel% neq 0 (
+    echo [ERROR] Cannot find project directory
+    pause
+    exit /b 1
+)
 
-:: 打开浏览器
-echo 正在打开浏览器...
-start http://localhost:5173
+start "CampusTrade-Backend" cmd /k "echo Building and starting... && mvn spring-boot:run"
+
+:: Wait and open browser
+echo.
+echo Waiting for backend (15s)...
+ping -n 16 127.0.0.1 >nul
+
+echo Opening browser...
+start http://localhost:8080
 
 echo.
-echo ============================================
-echo   启动完成！
-echo   前端地址: http://localhost:5173
-echo   后端地址: http://localhost:8080
-echo ============================================
+echo ====================================
+echo   [OK] All done!
+echo   URL: http://localhost:8080
+echo   Admin: root / 123456
+echo   User:  test / 123456
+echo   API:   http://localhost:8080/doc.html
+echo ====================================
 echo.
-echo 按任意键关闭此窗口（不会停止服务）
-pause >nul
+echo Close the backend window to stop the server.
+echo This window can be closed safely.
+pause

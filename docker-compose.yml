@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # ===== MySQL 8.0 =====
+  mysql:
+    image: mysql:8.0
+    container_name: campus-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: campus_trade
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_0900_ai_ci
+    ports:
+      - "3307:3306"   # 映射到 3307 避免与本地 MySQL 冲突
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./campus-trade-server/src/main/resources/db/migration/V1__upgrade.sql:/docker-entrypoint-initdb.d/02-upgrade.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Redis 7 =====
+  redis:
+    image: redis:7-alpine
+    container_name: campus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ===== 校园二手交易平台 =====
+  app:
+    build: .
+    container_name: campus-trade
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/campus_trade?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET: CampusTradeJwtSecret2024KeyMustBeAtLeast256BitsLongForHS256
+      CAMPUSTRADE_UPLOAD_PATH: /app/uploads
+    volumes:
+      - app-uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  redis-data:
+  app-uploads:

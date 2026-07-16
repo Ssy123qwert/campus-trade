@@ -11,20 +11,32 @@ import com.campustrade.mapper.MessageMapper;
 import com.campustrade.service.MessageService;
 import com.campustrade.service.ProductService;
 import com.campustrade.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 消息服务实现
+ *
+ * WebSocket 推送：
+ * - 发送消息时，通过 SimpMessagingTemplate 实时推送给接收方
+ * - 支持在线推送 + 离线消息存储
+ * - 兼容 HTTP 轮询（WebSocket 不可用时前端可降级）
+ */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> implements MessageService {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ProductService productService;
+    private final UserService userService;
+    private final ProductService productService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public Message send(Long fromUserId, Long toUserId, Long productId, String content) {
@@ -38,6 +50,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             throw BusinessException.badRequest("消息内容不能超过1000个字符");
         }
 
+        // 落库
         Message message = new Message();
         message.setFromUserId(fromUserId);
         message.setToUserId(toUserId);
@@ -48,6 +61,26 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         if (!saved) {
             throw BusinessException.serverError("发送消息失败");
         }
+
+        // 创建通知
+        try {
+            jdbcTemplate.update("INSERT INTO t_notification(user_id, type, title, content, related_id, is_read) VALUES (?, 'NEW_MESSAGE', ?, ?, ?, 0)",
+                    toUserId, "新消息", content.substring(0, Math.min(content.length(), 200)), productId);
+        } catch (Exception e) {
+            log.debug("创建通知失败: {}", e.getMessage());
+        }
+
+        // WebSocket 实时推送给接收方
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    String.valueOf(toUserId),
+                    "/queue/chat",
+                    message
+            );
+        } catch (Exception e) {
+            log.debug("WebSocket 推送失败（可能接收方不在线）: {}", e.getMessage());
+        }
+
         return message;
     }
 
@@ -71,13 +104,11 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             throw BusinessException.badRequest("用户ID不能为空");
         }
 
-        // 获取所有与 userId 相关的消息
         LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
         wrapper.and(w -> w.eq(Message::getFromUserId, userId).or().eq(Message::getToUserId, userId))
                 .orderByDesc(Message::getCreateTime);
         List<Message> messages = this.list(wrapper);
 
-        // 按会话分组
         Map<String, Message> convMap = new LinkedHashMap<>();
         for (Message msg : messages) {
             Long other = msg.getFromUserId().equals(userId) ? msg.getToUserId() : msg.getFromUserId();
@@ -85,7 +116,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             convMap.putIfAbsent(key, msg);
         }
 
-        // 批量查询相关用户和商品，解决 N+1 问题
         Set<Long> userIds = new HashSet<>();
         Set<Long> productIds = new HashSet<>();
         for (Message msg : convMap.values()) {
@@ -99,7 +129,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         Map<Long, Product> productMap = productIds.isEmpty() ? new HashMap<>() :
                 productService.listByIds(productIds).stream().collect(Collectors.toMap(Product::getId, p -> p));
 
-        // 批量查询未读数
         Map<String, Long> unreadMap = new HashMap<>();
         for (Message msg : convMap.values()) {
             Long otherId = msg.getFromUserId().equals(userId) ? msg.getToUserId() : msg.getFromUserId();
@@ -112,7 +141,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
             unreadMap.put(key, unread);
         }
 
-        // 构建返回数据
         List<Map<String, Object>> result = new ArrayList<>();
         for (Message msg : convMap.values()) {
             Map<String, Object> item = new LinkedHashMap<>();
@@ -151,7 +179,6 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
         if (fromUserId == null || toUserId == null || productId == null) {
             throw BusinessException.badRequest("参数不能为空");
         }
-        // 批量更新替代逐条更新，一次 SQL 完成
         this.update(new LambdaUpdateWrapper<Message>()
                 .eq(Message::getFromUserId, fromUserId)
                 .eq(Message::getToUserId, toUserId)

@@ -2,7 +2,9 @@ package com.campustrade.controller;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.img.ImgUtil;
 import com.campustrade.dto.R;
+import java.awt.Color;
 import com.campustrade.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -57,6 +59,11 @@ public class FileController {
                 String filename = IdUtil.fastSimpleUUID() + "." + ext;
                 File dest = new File(dir, filename);
                 file.transferTo(dest);
+                // 图片上传后自动生成缩略图（最大 200x200，白底填充）
+                if (!isVideo) {
+                    File thumb = new File(dir, "thumb_" + filename);
+                    ImgUtil.scale(dest, thumb, 200, 200, Color.WHITE);
+                }
                 String urlPrefix = isVideo ? "/api/file/videos/" : "/api/file/image/";
                 urls.add(urlPrefix + filename);
             } catch (IOException e) {
@@ -68,6 +75,19 @@ public class FileController {
 
     @GetMapping("/image/{filename}")
     public ResponseEntity<Resource> image(@PathVariable String filename) {
+        return serveFile(filename, "images", ALLOWED_IMAGE_TYPES, true);
+    }
+
+    /**
+     * 获取缩略图（200px 宽，自动缩放）
+     * 如果缩略图不存在则返回原图
+     */
+    @GetMapping("/thumb/{filename}")
+    public ResponseEntity<Resource> thumb(@PathVariable String filename) {
+        File thumbFile = new File(uploadPath + File.separator + "images", "thumb_" + filename);
+        if (thumbFile.exists()) {
+            return serveFile("thumb_" + filename, "images", ALLOWED_IMAGE_TYPES, true);
+        }
         return serveFile(filename, "images", ALLOWED_IMAGE_TYPES, true);
     }
 
@@ -95,6 +115,15 @@ public class FileController {
             throw BusinessException.badRequest("文件路径解析失败");
         }
         if (!file.exists()) {
+            // 图片不存在时返回默认占位图
+            if (isImage) {
+                File defaultFile = new File(uploadPath + File.separator + "images", "default.png");
+                if (defaultFile.exists()) {
+                    return ResponseEntity.ok()
+                            .contentType(MediaType.IMAGE_PNG)
+                            .body(new FileSystemResource(defaultFile));
+                }
+            }
             return ResponseEntity.notFound().build();
         }
         MediaType contentType;

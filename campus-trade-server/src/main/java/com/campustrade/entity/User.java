@@ -14,8 +14,11 @@ public class User {
     private String nickname;
     private String avatar;
     private String phone;
+    private String email;
     private String school;
     private Integer role;
+    private Integer totalRating;
+    private Integer ratingCount;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 }

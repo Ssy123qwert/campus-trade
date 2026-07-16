@@ -5,19 +5,14 @@
       <span :class="{ active: tab === 'buyer' }" @click="tab = 'buyer'; loadOrders()">我买的</span>
       <span :class="{ active: tab === 'seller' }" @click="tab = 'seller'; loadOrders()">我卖的</span>
     </div>
-    <div v-if="!user" class="login-tip">
-      <p>请先登录</p>
-      <button @click="$router.push('/login')">去登录</button>
-    </div>
-    <div v-else-if="orders.length === 0" class="empty">暂无订单</div>
+    <div v-if="orders.length === 0" class="empty">暂无订单</div>
     <div v-else class="order-list">
       <div v-for="order in orders" :key="order.id" class="order-card">
         <div class="order-header">
-          <span>订单号：{{ order.id }}</span>
+          <span>订单号：{{ order.orderNo || order.id }}</span>
           <span class="status" :class="statusClass(order.status)">{{ statusText(order.status) }}</span>
         </div>
         <div class="order-body">
-          <p>商品ID：{{ order.productId }}</p>
           <p>金额：<span class="price">&yen;{{ order.amount }}</span></p>
           <p>时间：{{ order.createTime }}</p>
         </div>
@@ -27,11 +22,11 @@
         <div class="order-actions" v-if="tab === 'seller' && order.status === 1">
           <button @click="ship(order.id)">确认发货</button>
         </div>
-        <div class="order-actions" v-else-if="tab === 'buyer' && order.status === 2">
+        <div class="order-actions" v-if="tab === 'buyer' && order.status === 2">
           <button @click="confirm(order.id)">确认收货</button>
         </div>
-        <div class="order-actions" v-else-if="order.status === 3">
-          <button v-if="tab === 'buyer'" class="review-btn" @click="$router.push('/review/' + order.id)">写评价</button>
+        <div class="order-actions" v-if="order.status === 3 && tab === 'buyer'">
+          <button class="review-btn" @click="$router.push('/review/' + order.id)">写评价</button>
         </div>
       </div>
     </div>
@@ -47,13 +42,11 @@ export default {
   name: 'MyOrders',
   setup() {
     const router = useRouter()
-    const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
     const tab = ref('buyer')
     const orders = ref([])
 
     const loadOrders = async () => {
-      if (!user.value) return
-      const res = await api.getMyOrders(user.value.id, tab.value)
+      const res = await api.getMyOrders(tab.value)
       if (res.code === 200) orders.value = res.data
     }
 
@@ -69,23 +62,29 @@ export default {
       return ''
     }
 
-    const goPay = (orderId) => {
-      router.push(`/detail/${order.productId}`)
+    const goPay = async (id) => {
+      const res = await api.payOrder(id)
+      if (res.code === 200) {
+        alert('支付成功！')
+        loadOrders()
+      } else {
+        alert(res.msg || '支付失败')
+      }
     }
 
     const ship = async (id) => {
-      await api.updateOrderStatus(id, 2, user.value.id)
+      await api.ship(id)
       loadOrders()
     }
 
     const confirm = async (id) => {
-      await api.updateOrderStatus(id, 3, user.value.id)
+      await api.confirm(id)
       loadOrders()
     }
 
     onMounted(loadOrders)
 
-    return { user, tab, orders, statusText, statusClass, goPay, ship, confirm, loadOrders }
+    return { tab, orders, statusText, statusClass, goPay, ship, confirm, loadOrders }
   }
 }
 </script>
@@ -107,6 +106,4 @@ export default {
 .order-actions { margin-top: 8px; text-align: right; }
 .order-actions button { padding: 6px 15px; background: #07c160; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; margin-left: 8px; }
 .order-actions .pay-now-btn { background: #f44; }
-.login-tip { text-align: center; padding: 80px 20px; }
-.login-tip button { margin-top: 15px; padding: 10px 30px; background: #07c160; color: #fff; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
 </style>

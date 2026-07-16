@@ -239,4 +239,16 @@ export default {
 .form button:disabled { background: #aaa; cursor: not-allowed; }
 .login-tip { text-align: center; padding: 60px 20px; }
 .login-tip button { margin-top: 15px; padding: 10px 30px; background: #07c160; color: #fff; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+
+/* 桌面: 表单居中加宽 */
+@media (min-width: 768px) {
+  .publish-page { max-width: 640px; margin: 0 auto; }
+  .header { border-radius: 0 0 16px 16px; }
+  .form { padding: 24px; gap: 16px; }
+  .form input, .form textarea, .form select { padding: 14px; font-size: 15px; }
+  .form button { padding: 14px; font-size: 17px; }
+  .image-item { width: 110px; height: 110px; }
+  .add-btn { width: 110px; height: 110px; }
+  .uploading-item { width: 110px; height: 110px; }
+}
 </style>
