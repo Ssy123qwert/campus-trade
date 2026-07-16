@@ -9,6 +9,9 @@ BOOT-INF/
 $null
 *.tar.gz
 *.zip
+*.class
+*.pyc
+__pycache__/
 
 # 临时文件
 *_new.js
@@ -21,9 +24,13 @@ application.properties.bak
 # 部署包
 campus-trade-deploy/
 
+# 桌面端构建产物（超大文件）
+campus-trade-desktop/build/
+
 # 答辩文档
 答辩话术参考.md
 
 # 项目总结
 项目改造总结报告.md
+project-overview.md
 conversation-log.md
